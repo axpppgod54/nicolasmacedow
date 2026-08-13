@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>AJJAZ Digital Factory — Protótipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F6;
+    --surface:#FFFFFF;
+    --ink:#12213A;
+    --ink-soft:#5B6B84;
+    --blue:#0B5FA5;
+    --blue-dark:#073B6B;
+    --blue-soft:#E7F0FA;
+    --green:#1E9E63;
+    --green-soft:#E5F6ED;
+    --cyan:#0EA5B7;
+    --cyan-soft:#E3F7F9;
+    --amber:#E8A33D;
+    --amber-soft:#FBF0DE;
+    --red:#E1483F;
+    --red-soft:#FCE7E6;
+    --border:#E2E8F0;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(18,33,58,.04), 0 8px 24px -12px rgba(18,33,58,.12);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:#0B1220;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 12px;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  /* ===== Phone frame ===== */
+  .device{
+    width:390px;
+    height:844px;
+    background:var(--bg);
+    border-radius:44px;
+    box-shadow:0 0 0 10px #0B1220, 0 0 0 12px #2A3550, 0 30px 60px -20px rgba(0,0,0,.6);
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:0; left:50%; transform:translateX(-50%);
+    width:120px; height:26px; background:#0B1220; border-radius:0 0 16px 16px; z-index:50;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transition:opacity .35s ease;
+  }
+  .screen.active{ opacity:1; pointer-events:auto; }
+
+  /* ===== Splash ===== */
+  #screen-splash{
+    background:linear-gradient(160deg,var(--blue-dark) 0%, var(--blue) 60%, #0E7C8C 130%);
+    align-items:center; justify-content:center; color:#fff;
+  }
+  .splash-logo{
+    width:84px; height:84px; border-radius:22px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.25);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:30px;
+    margin-bottom:22px;
+    backdrop-filter:blur(6px);
+    animation:pop .6s cubic-bezier(.2,.9,.25,1);
+  }
+  @keyframes pop{ from{ transform:scale(.7); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  .splash-title{ font-size:22px; font-weight:700; letter-spacing:.3px; }
+  .splash-sub{ font-size:13px; opacity:.8; margin-top:6px; letter-spacing:.5px; text-transform:uppercase; }
+  .splash-status{
+    margin-top:46px; font-size:12.5px; color:rgba(255,255,255,.85);
+    display:flex; align-items:center; gap:8px; height:18px;
+  }
+  .spinner{
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid rgba(255,255,255,.3); border-top-color:#fff;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .splash-bar{
+    width:160px; height:3px; border-radius:3px; background:rgba(255,255,255,.18);
+    margin-top:18px; overflow:hidden;
+  }
+  .splash-bar-fill{
+    height:100%; width:0%; background:#fff; border-radius:3px;
+    transition:width .35s ease;
+  }
+
+  /* ===== Login ===== */
+  #screen-login{ background:var(--surface); padding:0; }
+  .login-hero{
+    background:linear-gradient(135deg,var(--blue-dark),var(--blue));
+    height:230px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; position:relative; overflow:hidden;
+  }
+  .login-hero::after{
+    content:''; position:absolute; inset:0;
+    background-image:radial-gradient(circle at 20% 20%, rgba(255,255,255,.08) 0, transparent 40%),
+                      radial-gradient(circle at 85% 75%, rgba(255,255,255,.08) 0, transparent 40%);
+  }
+  .login-mark{
+    width:60px; height:60px; border-radius:16px; background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:22px; margin-bottom:12px; z-index:1;
+  }
+  .login-hero h1{ font-size:18px; font-weight:700; z-index:1; }
+  .login-hero span{ font-size:12px; opacity:.8; margin-top:4px; z-index:1; }
+  .login-body{ padding:26px 24px; flex:1; display:flex; flex-direction:column; }
+  .field{ margin-bottom:16px; }
+  .field label{ font-size:12px; font-weight:600; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px; }
+  .field input{
+    width:100%; margin-top:7px; padding:13px 14px; border-radius:12px;
+    border:1.5px solid var(--border); font-size:14.5px; font-family:'Inter'; color:var(--ink);
+    background:#FAFBFD; outline:none; transition:border-color .15s;
+  }
+  .field input:focus{ border-color:var(--blue); background:#fff; }
+  .btn-primary{
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:var(--blue); color:#fff; font-size:14.5px; font-weight:600;
+    font-family:'Inter'; cursor:pointer; margin-top:6px;
+    box-shadow:0 8px 16px -6px rgba(11,95,165,.5);
+    transition:transform .12s ease;
+  }
+  .btn-primary:active{ transform:scale(.98); }
+  .login-demo{
+    margin-top:auto; text-align:center; font-size:11.5px; color:var(--ink-soft);
+    background:var(--blue-soft); padding:10px; border-radius:10px; line-height:1.5;
+  }
+  .login-demo b{ color:var(--blue); }
+
+  /* ===== App shell ===== */
+  .app-shell{ background:var(--bg); }
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px 12px; background:var(--surface); border-bottom:1px solid var(--border);
+  }
+  .topbar-left{ display:flex; align-items:center; gap:10px; }
+  .topbar-mark{
+    width:34px; height:34px; border-radius:9px; background:var(--blue);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk'; font-weight:700; font-size:13px;
+  }
+  .topbar h2{ font-size:14.5px; font-weight:700; }
+  .topbar-sub{ font-size:10.5px; color:var(--ink-soft); }
+  .bell{
+    position:relative; width:36px; height:36px; border-radius:10px; background:var(--bg);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px;
+    border:1px solid var(--border);
+  }
+  .bell::after{
+    content:'7'; position:absolute; top:-5px; right:-5px; background:var(--red); color:#fff;
+    font-size:9px; font-weight:700; width:16px; height:16px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; font-family:'Inter';
+  }
+  .content{ flex:1; overflow-y:auto; padding:16px 16px 90px; }
+  .content::-webkit-scrollbar{ display:none; }
+
+  .section-label{
+    font-size:11px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+    color:var(--ink-soft); margin:18px 2px 10px;
+  }
+  .section-label:first-child{ margin-top:2px; }
+
+  .kpi-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .kpi-card{
+    background:var(--surface); border-radius:var(--radius); padding:14px;
+    box-shadow:var(--shadow); border:1px solid var(--border);
+  }
+  .kpi-card .val{ font-family:'Space Grotesk'; font-size:22px; font-weight:700; }
+  .kpi-card .lbl{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .kpi-card .trend{ font-size:10.5px; margin-top:6px; font-weight:600; }
+  .trend.up{ color:var(--green); }
+  .trend.down{ color:var(--red); }
+
+  .goal-card{
+    background:var(--surface); border-radius:var(--radius); padding:16px; margin-top:12px;
+    box-shadow:var(--shadow); border:1px solid var(--border);
+  }
+  .goal-top{ display:flex; justify-content:space-between; align-items:baseline; }
+  .goal-top .big{ font-family:'Space Grotesk'; font-size:26px; font-weight:700; }
+  .goal-top .pct{ font-family:'JetBrains Mono'; font-size:13px; font-weight:600; color:var(--blue); }
+  .goal-labels{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-soft); margin-top:4px; }
+  .goal-bar{ height:8px; background:var(--bg); border-radius:6px; margin-top:10px; overflow:hidden; }
+  .goal-bar-fill{ height:100%; width:74.5%; border-radius:6px; background:linear-gradient(90deg,var(--blue),var(--cyan)); }
+
+  .grid-cards{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .mini-card{
+    background:var(--surface); border-radius:14px; padding:13px; border:1px solid var(--border);
+    box-shadow:var(--shadow);
+  }
+  .mini-card .icon{ font-size:17px; }
+  .mini-card .title{ font-size:12px; font-weight:600; margin-top:8px; }
+  .mini-card .row{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-soft); margin-top:8px; }
+  .mini-card .row b{ color:var(--ink); font-family:'JetBrains Mono'; font-weight:600; }
+  .dot{ width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; }
+  .dot.green{ background:var(--green); box-shadow:0 0 0 3px var(--green-soft); }
+  .dot.amber{ background:var(--amber); box-shadow:0 0 0 3px var(--amber-soft); }
+  .dot.red{ background:var(--red); box-shadow:0 0 0 3px var(--red-soft); }
+  .dot.cyan{ background:var(--cyan); box-shadow:0 0 0 3px var(--cyan-soft); }
+  .dot.gray{ background:#B6C0CE; box-shadow:0 0 0 3px #EDF1F5; }
+
+  /* ===== Machine map ===== */
+  .map-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .machine-card{
+    background:var(--surface); border-radius:14px; padding:13px; border:1px solid var(--border);
+    box-shadow:var(--shadow); cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .12s;
+  }
+  .machine-card:active{ transform:scale(.97); }
+  .machine-card .mcode{ font-family:'JetBrains Mono'; font-size:12px; font-weight:700; }
+  .machine-card .mprod{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+  .machine-status{
+    display:flex; align-items:center; gap:6px; margin-top:10px; font-size:10.5px; font-weight:600;
+  }
+  .pulse{
+    position:relative; width:9px; height:9px; border-radius:50%;
+  }
+  .pulse.green{ background:var(--green); }
+  .pulse.amber{ background:var(--amber); }
+  .pulse.red{ background:var(--red); }
+  .pulse.cyan{ background:var(--cyan); }
+  .pulse.gray{ background:#B6C0CE; }
+  .pulse.live::before{
+    content:''; position:absolute; inset:-5px; border-radius:50%;
+    background:inherit; opacity:.45; animation:pulseAnim 1.8s ease-out infinite;
+  }
+  @keyframes pulseAnim{ 0%{ transform:scale(.4); opacity:.55;} 100%{ transform:scale(2.2); opacity:0;} }
+  .machine-op{ font-family:'JetBrains Mono'; font-size:10.5px; color:var(--ink-soft); margin-top:6px; }
+
+  /* ===== Operator mode ===== */
+  .op-header{
+    background:linear-gradient(135deg,var(--blue-dark),var(--blue)); border-radius:18px; padding:18px;
+    color:#fff; margin-bottom:16px;
+  }
+  .op-header .tag{ font-size:10.5px; opacity:.75; text-transform:uppercase; letter-spacing:.5px; }
+  .op-header h2{ font-size:19px; margin-top:4px; }
+  .op-header .meta{ display:flex; gap:16px; margin-top:12px; }
+  .op-header .meta div div:first-child{ font-size:10px; opacity:.7; }
+  .op-header .meta div div:last-child{ font-family:'JetBrains Mono'; font-size:13px; font-weight:600; margin-top:2px; }
+
+  .op-btn-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .op-btn{
+    background:var(--surface); border:1px solid var(--border); border-radius:16px;
+    padding:18px 12px; text-align:center; box-shadow:var(--shadow); cursor:pointer;
+    transition:transform .12s;
+  }
+  .op-btn:active{ transform:scale(.96); }
+  .op-btn .emoji{ font-size:24px; }
+  .op-btn .lbl{ font-size:12px; font-weight:600; margin-top:8px; }
+  .op-btn.danger{ background:var(--red-soft); border-color:#F3C8C6; }
+  .op-btn.help{ background:var(--amber-soft); border-color:#F0DDB0; grid-column:span 2; display:flex; align-items:center; justify-content:center; gap:10px; padding:14px; }
+  .op-btn.help .lbl{ margin-top:0; font-size:13px; }
+
+  /* ===== QR screen ===== */
+  .qr-viewport{
+    flex:1; background:#0B1220; display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .qr-frame{
+    width:210px; height:210px; position:relative;
+  }
+  .qr-frame .corner{ position:absolute; width:32px; height:32px; border-color:var(--cyan); }
+  .qr-frame .tl{ top:0; left:0; border-top:4px solid var(--cyan); border-left:4px solid var(--cyan); border-radius:8px 0 0 0;}
+  .qr-frame .tr{ top:0; right:0; border-top:4px solid var(--cyan); border-right:4px solid var(--cyan); border-radius:0 8px 0 0;}
+  .qr-frame .bl{ bottom:0; left:0; border-bottom:4px solid var(--cyan); border-left:4px solid var(--cyan); border-radius:0 0 0 8px;}
+  .qr-frame .br{ bottom:0; right:0; border-bottom:4px solid var(--cyan); border-right:4px solid var(--cyan); border-radius:0 0 8px 0;}
+  .scan-line{
+    position:absolute; left:8px; right:8px; height:2px; background:var(--cyan);
+    box-shadow:0 0 12px 2px var(--cyan); top:8px;
+    animation:scan 2.2s ease-in-out infinite;
+  }
+  @keyframes scan{ 0%{ top:8px;} 50%{ top:196px;} 100%{ top:8px;} }
+  .qr-hint{ position:absolute; bottom:26px; left:0; right:0; text-align:center; color:#B9C4D6; font-size:12px; }
+  .qr-bottom{ background:var(--surface); padding:18px; }
+  .qr-manual{ display:flex; gap:8px; }
+  .qr-manual input{
+    flex:1; padding:12px; border-radius:10px; border:1.5px solid var(--border);
+    font-family:'JetBrains Mono'; font-size:13px;
+  }
+  .qr-manual button{
+    padding:0 16px; border:none; border-radius:10px; background:var(--ink); color:#fff; font-weight:600; font-size:12.5px;
+  }
+
+  /* ===== Bottom nav ===== */
+  .bottomnav{
+    position:absolute; bottom:0; left:0; right:0; height:78px;
+    background:var(--surface); border-top:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-around;
+    padding-bottom:14px; z-index:40;
+  }
+  .navitem{
+    display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer;
+    color:var(--ink-soft); font-size:9.5px; font-weight:600;
+  }
+  .navitem .navicon{ font-size:18px; opacity:.55; }
+  .navitem.active{ color:var(--blue); }
+  .navitem.active .navicon{ opacity:1; }
+
+  /* ===== Modal (machine detail) ===== */
+  .modal-backdrop{
+    position:absolute; inset:0; background:rgba(10,18,32,.5); z-index:60;
+    opacity:0; pointer-events:none; transition:opacity .2s;
+  }
+  .modal-backdrop.active{ opacity:1; pointer-events:auto; }
+  .modal-sheet{
+    position:absolute; left:0; right:0; bottom:0; background:var(--surface);
+    border-radius:22px 22px 0 0; padding:20px 20px 28px; transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.2,.9,.25,1); max-height:70%; overflow-y:auto;
+  }
+  .modal-backdrop.active .modal-sheet{ transform:translateY(0); }
+  .modal-handle{ width:36px; height:4px; background:var(--border); border-radius:3px; margin:0 auto 16px; }
+  .modal-sheet h3{ font-size:17px; }
+  .modal-row{ display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+  .modal-row span:first-child{ color:var(--ink-soft); }
+  .modal-row span:last-child{ font-family:'JetBrains Mono'; font-weight:600; }
+  .modal-close{
+    margin-top:16px; width:100%; padding:12px; border:none; border-radius:10px;
+    background:var(--bg); font-weight:600; font-size:13px; color:var(--ink);
+  }
+
+  .device-caption{ color:#8492AD; font-size:11.5px; text-align:center; margin-top:14px; letter-spacing:.3px; }
+</style>
+</head>
+<body>
+
+<div>
+<div class="device">
+  <div class="notch"></div>
+
+  <!-- SPLASH -->
+  <div class="screen active" id="screen-splash">
+    <div class="splash-logo">AJ</div>
+    <div class="splash-title">AJJAZ DIGITAL FACTORY</div>
+    <div class="splash-sub">Sistema de Gestão Industrial</div>
+    <div class="splash-status"><span class="spinner"></span><span id="splash-text">Inicializando sistema</span></div>
+    <div class="splash-bar"><div class="splash-bar-fill" id="splash-fill"></div></div>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="screen" id="screen-login">
+    <div class="login-hero">
+      <div class="login-mark">AJ</div>
+      <h1>AJJAZ Digital Factory</h1>
+      <span>AJJAZ Plásticos</span>
+    </div>
+    <div class="login-body">
+      <div class="field">
+        <label>Usuário</label>
+        <input type="text" placeholder="Login" value="admin">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" placeholder="••••••••" value="••••••••">
+      </div>
+      <button class="btn-primary" onclick="goTo('central')">Entrar</button>
+      <div class="login-demo">🔒 <b>Protótipo visual</b> — não valida senha real, nem salva dados. Serve só para mostrar as telas.</div>
+    </div>
+  </div>
+
+  <!-- CENTRAL AJJAZ -->
+  <div class="screen app-shell" id="screen-central">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-mark">AJ</div>
+        <div><h2>Central AJJAZ</h2><div class="topbar-sub">Visão geral da fábrica</div></div>
+      </div>
+      <div class="bell" onclick="openModal()">🔔</div>
+    </div>
+    <div class="content">
+      <div class="section-label">Produção</div>
+      <div class="kpi-row">
+        <div class="kpi-card"><div class="val">18.420</div><div class="lbl">Produção do dia</div><div class="trend up">▲ 6,2% vs. ontem</div></div>
+        <div class="kpi-card"><div class="val">3</div><div class="lbl">OPs atrasadas</div><div class="trend down">▲ 1 desde o turno</div></div>
+      </div>
+
+      <div class="goal-card">
+        <div class="goal-top"><span class="big">7.450</span><span class="pct">74,5%</span></div>
+        <div class="goal-labels"><span>Meta do turno: 10.000</span><span>Falta: 2.550</span></div>
+        <div class="goal-bar"><div class="goal-bar-fill"></div></div>
+      </div>
+
+      <div class="section-label">Máquinas & Refugo</div>
+      <div class="grid-cards">
+        <div class="mini-card">
+          <div class="icon">⚙️</div>
+          <div class="title">Máquinas</div>
+          <div class="row"><span><span class="dot green"></span>Produzindo</span><b>7</b></div>
+          <div class="row"><span><span class="dot red"></span>Paradas</span><b>1</b></div>
+          <div class="row"><span><span class="dot cyan"></span>Manutenção</span><b>1</b></div>
+        </div>
+        <div class="mini-card">
+          <div class="icon">⚠️</div>
+          <div class="title">Refugo</div>
+          <div class="row"><span>Peso hoje</span><b>142 kg</b></div>
+          <div class="row"><span>% sobre produção</span><b>1,9%</b></div>
+          <div class="row"><span>Principal motivo</span><b>REBARBA</b></div>
+        </div>
+      </div>
+
+      <div class="section-label">Moinho & Estoque</div>
+      <div class="grid-cards">
+        <div class="mini-card">
+          <div class="icon">♻️</div>
+          <div class="title">Moinho</div>
+          <div class="row"><span>Material parado</span><b>120 kg</b></div>
+          <div class="row"><span>Processando</span><b>45 kg</b></div>
+        </div>
+        <div class="mini-card">
+          <div class="icon">📦</div>
+          <div class="title">Estoque</div>
+          <div class="row"><span>Materiais críticos</span><b>2</b></div>
+          <div class="row"><span>Produtos disponíveis</span><b>318</b></div>
+        </div>
+      </div>
+
+      <div class="section-label">Logística & Qualidade</div>
+      <div class="grid-cards">
+        <div class="mini-card">
+          <div class="icon">🚚</div>
+          <div class="title">Logística</div>
+          <div class="row"><span>Pedidos atrasados</span><b>1</b></div>
+          <div class="row"><span>Expedidos hoje</span><b>14</b></div>
+        </div>
+        <div class="mini-card">
+          <div class="icon">✅</div>
+          <div class="title">Qualidade</div>
+          <div class="row"><span>Checklists pendentes</span><b>2</b></div>
+          <div class="row"><span>Reprovações</span><b>1</b></div>
+        </div>
+      </div>
+    </div>
+    <div id="bottomnav-central"></div>
+  </div>
+
+  <!-- MAPA DA FÁBRICA -->
+  <div class="screen app-shell" id="screen-mapa">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-mark">🏭</div>
+        <div><h2>Mapa da Fábrica</h2><div class="topbar-sub">8 máquinas monitoradas</div></div>
+      </div>
+      <div class="bell" onclick="openModal()">🔔</div>
+    </div>
+    <div class="content">
+      <div class="section-label">Status ao vivo</div>
+      <div class="map-grid" id="map-grid"></div>
+    </div>
+    <div id="bottomnav-mapa"></div>
+  </div>
+
+  <!-- MODO OPERADOR -->
+  <div class="screen app-shell" id="screen-operador">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-mark">👷</div>
+        <div><h2>Minha Máquina</h2><div class="topbar-sub">Modo operador</div></div>
+      </div>
+      <div class="bell" onclick="openModal()">🔔</div>
+    </div>
+    <div class="content">
+      <div class="op-header">
+        <div class="tag">Injetora 04</div>
+        <h2>Tampa XYZ</h2>
+        <div class="meta">
+          <div><div>OP atual</div><div>OP-00251</div></div>
+          <div><div>Material</div><div>PP Preto</div></div>
+        </div>
+      </div>
+      <div class="op-btn-grid">
+        <div class="op-btn" onclick="showToast('Instruções da OP-00251')"><div class="emoji">📖</div><div class="lbl">Instruções</div></div>
+        <div class="op-btn" onclick="showToast('Instruções de embalagem')"><div class="emoji">📦</div><div class="lbl">Embalagem</div></div>
+        <div class="op-btn" onclick="showToast('Procedimento de troca de molde')"><div class="emoji">🔧</div><div class="lbl">Troca de molde</div></div>
+        <div class="op-btn danger" onclick="showToast('Registro de refugo aberto')"><div class="emoji">⚠️</div><div class="lbl">Registrar refugo</div></div>
+        <div class="op-btn help" onclick="showToast('Chamado de ajuda enviado')"><span class="emoji">🆘</span><span class="lbl">Preciso de ajuda</span></div>
+      </div>
+    </div>
+    <div id="bottomnav-operador"></div>
+  </div>
+
+  <!-- QR -->
+  <div class="screen" id="screen-qr">
+    <div class="topbar" style="background:#0B1220; border-color:#1B2635;">
+      <div class="topbar-left">
+        <div class="topbar-mark" style="background:var(--cyan);">QR</div>
+        <div><h2 style="color:#fff;">Leitor de QR Code</h2><div class="topbar-sub" style="color:#8492AD;">OP · Máquina · Molde · Pallet</div></div>
+      </div>
+      <div class="bell" style="background:#1B2635; border-color:#243049; color:#fff;" onclick="goTo('operador')">✕</div>
+    </div>
+    <div class="qr-viewport">
+      <div class="qr-frame">
+        <div class="corner tl"></div><div class="corner tr"></div>
+        <div class="corner bl"></div><div class="corner br"></div>
+        <div class="scan-line"></div>
+      </div>
+      <div class="qr-hint">Aponte a câmera para o QR Code</div>
+    </div>
+    <div class="qr-bottom">
+      <div class="section-label" style="margin-top:0;">Ou digite o código manualmente</div>
+      <div class="qr-manual">
+        <input type="text" placeholder="Ex: OP-00251" class="mono">
+        <button onclick="showToast('Buscando código…')">Buscar</button>
+      </div>
+    </div>
+    <div id="bottomnav-qr"></div>
+  </div>
+
+  <!-- Modal genérico (notificações / detalhe de máquina) -->
+  <div class="modal-backdrop" id="modal" onclick="closeModalBg(event)">
+    <div class="modal-sheet" id="modal-sheet">
+      <div class="modal-handle"></div>
+      <h3 id="modal-title">Central de notificações</h3>
+      <div id="modal-body" style="margin-top:12px;"></div>
+      <button class="modal-close" onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" style="position:absolute; left:20px; right:20px; bottom:96px; background:#12213A; color:#fff; padding:12px 16px; border-radius:12px; font-size:12.5px; text-align:center; opacity:0; transform:translateY(10px); transition:all .25s; z-index:80; pointer-events:none;"></div>
+
+</div>
+<div class="device-caption">Protótipo visual — AJJAZ Digital Factory · toque nos ícones para navegar</div>
+</div>
+
+<template id="bottomnav-template">
+  <div class="bottomnav">
+    <div class="navitem" data-target="central"><span class="navicon">🧠</span>Central</div>
+    <div class="navitem" data-target="mapa"><span class="navicon">🏭</span>Mapa</div>
+    <div class="navitem" data-target="qr"><span class="navicon">▦</span>QR</div>
+    <div class="navitem" data-target="operador"><span class="navicon">👷</span>Operador</div>
+    <div class="navitem" data-target="login"><span class="navicon">⏻</span>Sair</div>
+  </div>
+</template>
+
+<script>
+  // ---------- Splash sequence ----------
+  const splashSteps = [
+    "Inicializando sistema",
+    "Conectando ao backend",
+    "Verificando sessão",
+    "Carregando configurações",
+    "Carregando dados",
+    "Sistema pronto"
+  ];
+  let step = 0;
+  const splashText = document.getElementById('splash-text');
+  const splashFill = document.getElementById('splash-fill');
+
+  function runSplash(){
+    splashText.textContent = splashSteps[step];
+    splashFill.style.width = ((step+1)/splashSteps.length*100)+'%';
+    step++;
+    if(step < splashSteps.length){
+      setTimeout(runSplash, 480);
+    } else {
+      setTimeout(()=> goTo('login'), 500);
+    }
+  }
+  setTimeout(runSplash, 400);
+
+  // ---------- Navigation ----------
+  function goTo(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-'+name).classList.add('active');
+    if(name === 'login'){ step = 0; }
+  }
+
+  // ---------- Bottom nav injection ----------
+  ['central','mapa','operador','qr'].forEach(name=>{
+    const holder = document.getElementById('bottomnav-'+name);
+    if(!holder) return;
+    const tpl = document.getElementById('bottomnav-template').content.cloneNode(true);
+    tpl.querySelectorAll('.navitem').forEach(item=>{
+      if(item.dataset.target === name) item.classList.add('active');
+      item.addEventListener('click', ()=> goTo(item.dataset.target));
+    });
+    holder.replaceWith(tpl.querySelector('.bottomnav') || tpl);
+  });
+  // fix: replaceWith needs actual node from fragment
+  document.querySelectorAll('[id^="bottomnav-"]').forEach(el=>{
+    if(el.tagName === 'DIV' && !el.classList.contains('bottomnav') && el.children.length===0){
+      const name = el.id.replace('bottomnav-','');
+      const tpl = document.getElementById('bottomnav-template').content.cloneNode(true);
+      const nav = tpl.querySelector('.bottomnav');
+      nav.querySelectorAll('.navitem').forEach(item=>{
+        if(item.dataset.target === name) item.classList.add('active');
+        item.addEventListener('click', ()=> goTo(item.dataset.target));
+      });
+      el.replaceWith(nav);
+    }
+  });
+
+  // ---------- Machine map ----------
+  const machines = [
+    {code:'INJ-01', product:'Tampa XYZ', op:'OP-00251', status:'green', label:'Produzindo'},
+    {code:'INJ-02', product:'Pote 500ml', op:'OP-00252', status:'green', label:'Produzindo'},
+    {code:'INJ-03', product:'—', op:'—', status:'red', label:'Parada'},
+    {code:'INJ-04', product:'Tampa XYZ', op:'OP-00251', status:'green', label:'Produzindo'},
+    {code:'INJ-05', product:'Balde 10L', op:'OP-00248', status:'amber', label:'Setup'},
+    {code:'INJ-06', product:'Suporte ABC', op:'OP-00253', status:'green', label:'Produzindo'},
+    {code:'INJ-07', product:'—', op:'—', status:'cyan', label:'Manutenção'},
+    {code:'INJ-08', product:'—', op:'—', status:'gray', label:'Disponível'},
+  ];
+  const mapGrid = document.getElementById('map-grid');
+  machines.forEach(m=>{
+    const card = document.createElement('div');
+    card.className = 'machine-card';
+    card.innerHTML = `
+      <div class="mcode">${m.code}</div>
+      <div class="mprod">${m.product}</div>
+      <div class="machine-status"><span class="pulse ${m.status} ${m.status==='green'?'live':''}"></span>${m.label}</div>
+      <div class="machine-op">${m.op}</div>
+    `;
+    card.addEventListener('click', ()=> openMachineModal(m));
+    mapGrid.appendChild(card);
+  });
+
+  // ---------- Modal ----------
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modal-title');
+  const modalBody = document.getElementById('modal-body');
+
+  function openModal(){
+    modalTitle.textContent = 'Central de notificações';
+    modalBody.innerHTML = `
+      <div class="modal-row"><span>🔴 OP-00253 atrasada</span><span>12 min</span></div>
+      <div class="modal-row"><span>⚠️ PP Preto parado</span><span>8 dias</span></div>
+      <div class="modal-row"><span>🔧 Manutenção pendente</span><span>INJ-07</span></div>
+      <div class="modal-row"><span>📦 Pedido 45821 atrasado</span><span>1 dia</span></div>
+    `;
+    modal.classList.add('active');
+  }
+  function openMachineModal(m){
+    modalTitle.textContent = m.code + ' — Detalhe';
+    modalBody.innerHTML = `
+      <div class="modal-row"><span>Status</span><span>${m.label}</span></div>
+      <div class="modal-row"><span>OP atual</span><span>${m.op}</span></div>
+      <div class="modal-row"><span>Produto</span><span>${m.product}</span></div>
+      <div class="modal-row"><span>Molde</span><span>MLD-0${Math.ceil(Math.random()*9)}</span></div>
+      <div class="modal-row"><span>Operador</span><span>—</span></div>
+    `;
+    modal.classList.add('active');
+  }
+  function closeModal(){ modal.classList.remove('active'); }
+  function closeModalBg(e){ if(e.target === modal) closeModal(); }
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.opacity = 1; t.style.transform = 'translateY(0)';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>{ t.style.opacity = 0; t.style.transform = 'translateY(10px)'; }, 1800);
+  }
+</script>
+</body>
+</html>
